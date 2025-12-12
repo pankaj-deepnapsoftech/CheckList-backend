@@ -28,7 +28,7 @@ function middlewares(app){
     app.use(json({limit:"20mb"}));
     app.use(urlencoded({extended:true,limit:"20mb"}));
     app.use(cors({
-        origin:"",
+        origin:config.NODE_ENV === "development" ? config.LOCAL_CLIENT_URL : config.CLIENT_URL,
         methods:["GET","POST","PUT","DELETE","PATCH","OPTIONS"],
         credentials:true,
     }));
