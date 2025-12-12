@@ -4,9 +4,8 @@ export class Customerror extends Error {
     statusCode;
     status="error";
     comingfrom;
-    constructor(message,statusCode,comingfrom){
+    constructor(message,comingfrom){
         super(message);
-        this.statusCode = statusCode;
         this.comingfrom = comingfrom;
     }
 

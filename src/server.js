@@ -10,16 +10,15 @@ import { CheckDbConnection } from "./dbConnection.js";
 import { config } from "./config.js";
 import { logger } from "./utils/logger.js";
 import { BadRequestError, Customerror } from "./utils/errorHandler.js";
+import mainRoutes from "./routes.js";
 
 
 const SERVER_PORT = 4040;
 
 
-
-
-
 export const Start = (app) => {
     middlewares(app);
+    routeMiddlewares(app);
     errorHandler(app);
     StartServer(app)
     Connections()
@@ -38,15 +37,20 @@ function middlewares(app){
     app.use(cookieParser());
 }
 
+function routeMiddlewares(app){
+    app.use("/health",(_req,res) => res.send("server is running and ok"))
+    app.use("/api/v1",mainRoutes);
+}
+
 function errorHandler (app){
-    app.get("/",(req,res,next)=>{
+    app.get("/",(_req,_res,next)=>{
         next(new BadRequestError("this route is not exist ","errorHandler() method error"))
     });
 
     app.use((err,_req,res,next)=>{
         if(err instanceof Customerror){
-            logger.log(`error coming from ${err?.comingfrom} with message: ${err.message} and status code: ${err.statusCode}`);
-            return res.status(err.statusCode).json(err.seriyalizeErrors());
+            logger.error(`error coming from ${err?.comingfrom} with message: ${err.message} and status code: ${err.statusCode}`);
+            res.status(err.statusCode).json(err.seriyalizeErrors());
         };
         next();
     });

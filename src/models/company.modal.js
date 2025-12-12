@@ -2,9 +2,9 @@ import {Schema,model} from "mongoose";
 
 
 const companySchema = new Schema({
-    company_name:{type:String,required:true,unique:true},
-    company_address:{type:String},
-    gst_no:{type:String,unique:true},
+    company_name:{type:String,required:true,unique:true,index:true},
+    company_address:{type:String,required:true},
+    gst_no:{type:String,unique:true, sparse: true},
     description:{type:String},
 });
 

@@ -1,6 +1,7 @@
-import { companyCreateService, FindCompanyByName } from "../services/company.service.js";
+import { StatusCodes } from "http-status-codes";
+import { comanyUpdateService, companyCreateService, companyListService, FindCompanyByName } from "../services/company.service.js";
 import { AsyncHandler } from "../utils/asyncHandler.js"
-import { BadRequestError } from "../utils/errorHandler.js";
+import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
 
 
 
@@ -10,10 +11,38 @@ export const createCompany = AsyncHandler(async (req, res) => {
     if (exist) {
         throw new BadRequestError("Company with this name already exists", "createCompany() method error");
     }
+    
     const result = await companyCreateService(data);
     return res.status(201).json({
         message: "Company created successfully",
         data: result
+    });
+});
+
+export const listCompany = AsyncHandler(async (req, res) => {
+    let { page, limit } = req.query;
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
+    const skip = (page - 1) * limit;
+    const result = await companyListService(skip, limit);
+
+    return res.status(200).json({
+        message: "Company list fetched successfully",
+        data: result
+    });
+});
+
+export const updateCompany = AsyncHandler(async (req,res) => {
+    const {id} = req.params;
+    const data = req.body;
+
+    const result = await comanyUpdateService(id,data);
+    if(!result){
+        throw new NotFoundError("Company not found","updateCompany() methed error")
+    }
+    res.status(StatusCodes.OK).json({
+        message:"Company updated successfully",
+        data:result
     });
 });
 
