@@ -1,0 +1,74 @@
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+// ---------------------------- local imports  -------------------------
+import { AsyncHandler } from "../utils/asyncHandler.js";
+import { createUserService, FindUserByEmailOrUserId } from "../services/users.service.js";
+import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
+import { StatusCodes } from "http-status-codes";
+import { config } from "../config.js";
+import { UserModel } from "../models/user.modal.js";
+
+
+export const registerUser = AsyncHandler(async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction()
+    try {
+        const data = req.body;
+        const exist = await FindUserByEmailOrUserId(data.email);
+        if (exist) {
+            throw new BadRequestError("User already Register with the email or User id", "registerUser() method error")
+        }
+
+        const result = await createUserService(data);
+        res.status(StatusCodes.CREATED).json({
+            message: "User register successfully",
+            user: result
+        });
+    } catch (error) {
+        await session.abortTransaction();
+        throw new BadRequestError(error.message, "registerUser() method error")
+    } finally {
+        session.endSession()
+    }
+});
+
+
+export const LoginUser = AsyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    const user = await FindUserByEmailOrUserId(email);
+
+    if (!user) {
+        throw new NotFoundError("Invalid credentials", "LoginUser() method error 1")
+    }
+
+    const isCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isCorrect) {
+        throw new NotFoundError("Invalid credentials", "LoginUser() method error 1")
+    }
+
+    const accessToken = jwt.sign({ email: user.email, id: user._id }, config.JWT_SECRET, { expiresIn: "30days" })
+    const refreshToken = jwt.sign({ email: user.email, id: user._id }, config.JWT_SECRET, { expiresIn: "31days" })
+
+    res.cookie("AT", accessToken, {
+        httpOnly: true,        // Cookie not accessible via document.cookie
+        secure: config.NODE_ENV !== "development",          // Sent only over HTTPS
+        maxAge:  30 * 24 * 60 * 60 * 1000, // Lifetime in milliseconds
+        sameSite: "none",    // "strict" | "lax" | "none"
+    }).cookie("RT",refreshToken,{
+        httpOnly: true,        // Cookie not accessible via document.cookie
+        secure: config.NODE_ENV !== "development",          // Sent only over HTTPS
+        maxAge:  31 * 24 * 60 * 60 * 1000, // Lifetime in milliseconds
+        sameSite: "none",    // "strict" | "lax" | "none"
+    });
+
+    res.status(StatusCodes.OK).json({
+        message:"User login Successfully"
+    });
+
+    await UserModel.findByIdAndUpdate(user._id,{refresh_token:refreshToken})
+
+})

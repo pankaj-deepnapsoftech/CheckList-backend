@@ -1,12 +1,45 @@
-import {Schema,model} from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
+import bcrypt from "bcrypt"
 
 
 const userSchema = new Schema({
-    full_name:{type:String},
-    email:{type:String,required:true,unique:true},
-    password:{type:String,required:true},
-    desigination:{type:String},
-    user_id:{type:String,required:true,unique:true},
-},{timestamps:true});
+    full_name: { type: String },
+    email: { type: String, required: true, unique: true, index: true },
+    password: { type: String, required: true },
+    desigination: { type: String },
+    user_id: { type: String, unique: true, index: true, sparse: true },
+    employee_plant: { type: Schema.Types.ObjectId, ref: "Plant" },
+    employee_company: { type: Schema.Types.ObjectId, ref: "Company" },
+    role: { type: Schema.Types.ObjectId, ref: "Role" },
+    terminate: { type: Boolean, required: true, default: false },
+    refresh_token:{type:String}
+}, { timestamps: true });
 
-export const UserModel = model("User",userSchema);
+userSchema.pre("save", async function () {
+    if (this.isNew && this.role) {
+        const lastUser = await mongoose
+            .model("User")
+            .findOne({ user_id: { $exists: true } })
+            .sort({ createdAt: -1 })
+            .select("user_id");
+
+        let nextNumber = 1;
+
+        if (lastUser?.user_id) {
+            const lastNumber = parseInt(lastUser.user_id.split("-")[1], 10);
+            nextNumber = lastNumber + 1;
+        }
+
+        this.user_id = `EMP-${String(nextNumber).padStart(4, "0")}`;
+    }
+
+    if (this.isModified("password")) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+});
+
+
+
+
+
+export const UserModel = model("User", userSchema);
