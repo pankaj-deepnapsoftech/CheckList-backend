@@ -12,7 +12,8 @@ const routes = Router();
 routes.route("/register-user").post(Validater(userValidationSchema),registerUser);
 routes.route("/login-user").post(LoginUser);
 routes.route("/logout-user").get(Authorization,LogoutUser);
-routes.route("/loged-in-user").get(Authorization,LogedInUser)
+routes.route("/loged-in-user").get(Authorization,LogedInUser);
+
 
 
 

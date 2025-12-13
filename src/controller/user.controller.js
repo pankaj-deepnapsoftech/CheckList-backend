@@ -90,4 +90,8 @@ export const LogedInUser = AsyncHandler(async (req,res) => {
     res.status(StatusCodes.OK).json({
         user:req?.currentUser
     })
+});
+
+export const UpdateUser = AsyncHandler(async (req,res) =>{
+
 })
