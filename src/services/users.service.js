@@ -29,7 +29,7 @@ export const FindUserByEmailOrUserId = async (email) => {
 
 
 export const FindUserById = async (id) => {
-    const result = await UserModel.findById(id).select("full_name email desigination user_id ");
+    const result = await UserModel.findById(id).select("full_name email desigination user_id employee_plant employee_company role").populate([{path:"employee_plant"},{path:"employee_company"},{path:"role"}]);
     return result;
 }
 

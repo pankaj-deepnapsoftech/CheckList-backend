@@ -10,10 +10,10 @@ import { Authorization } from "./middleware/Authorization.js";
 const routes = Router();
 
 
+routes.use("/users",usersRoutes);
 routes.use("/company",Authorization,companyRoutes);
 routes.use("/plant",Authorization,plantRoutes);
 routes.use("/roles",Authorization,roleRoutes);
-routes.use("/users",usersRoutes);
 
 
 export default routes;

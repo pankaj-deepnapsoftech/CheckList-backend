@@ -71,4 +71,23 @@ export const LoginUser = AsyncHandler(async (req, res) => {
 
     await UserModel.findByIdAndUpdate(user._id,{refresh_token:refreshToken})
 
+});
+
+
+export const LogoutUser = AsyncHandler(async (req,res) =>{
+    const user = req.currentUser;
+    if(!user){
+        throw new NotFoundError("user is not authorized","LogoutUser() method error");
+    };
+    res.clearCookie("AT").clearCookie("RT");
+    res.status(StatusCodes.OK).json({
+        message:"Logout Successfully"
+    })
+});
+
+
+export const LogedInUser = AsyncHandler(async (req,res) => {
+    res.status(StatusCodes.OK).json({
+        user:req?.currentUser
+    })
 })
