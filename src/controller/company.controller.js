@@ -9,9 +9,10 @@ import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
 
 export const createCompany = AsyncHandler(async (req, res) => {
     const data = req.body;
+
     const exist = await FindCompanyByName(data.company_name);
     if (exist) {
-        throw new BadRequestError("Company with this name already exists", "createCompany() method error");
+        throw new BadRequestError("Company name or gts number  already exists", "createCompany() method error");
     }
 
     const result = await companyCreateService(data);

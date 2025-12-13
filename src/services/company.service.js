@@ -22,13 +22,13 @@ export const comanyUpdateService = async (id, data) => {
     return result;
 };
 
-export const FindCompanyByName = async (company_name) => {
-    const result = await CompanyModel.findOne({ company_name }).lean();
+export const FindCompanyByName = async (company_name,gst_no) => {
+    const result = await CompanyModel.findOne({$or:[{company_name},{gst_no}]  }).lean();
     return result;
 };
 
-export const GetAllSearchItems =  async (search,skip,limit) => {
-    const result = await CompanyModel.find({$or:[{company_name:{$regex:search,$options:"i"}},{company_address:{$regex:search,$options:"i"}}]}).skip(skip).limit(limit).lean();
+export const GetAllSearchItems = async (search, skip, limit) => {
+    const result = await CompanyModel.find({ $or: [{ company_name: { $regex: search, $options: "i" } }, { company_address: { $regex: search, $options: "i" } }] }).skip(skip).limit(limit).lean();
     return result;
 };
 
