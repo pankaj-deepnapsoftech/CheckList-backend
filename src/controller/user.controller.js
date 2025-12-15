@@ -1,14 +1,21 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { fileURLToPath } from "url";
+import path from "path";
 
 // ---------------------------- local imports  -------------------------
 import { AsyncHandler } from "../utils/asyncHandler.js";
-import { createUserService, FindUserByEmailOrUserId, FindUserById, GetUsersService, SearchUsersService, UpdateUsersService } from "../services/users.service.js";
+import { createUserService, FindUserByEmail, FindUserByEmailOrUserId, FindUserById, GetUsersService, SearchUsersService, UpdateUsersService } from "../services/users.service.js";
 import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
 import { StatusCodes } from "http-status-codes";
 import { config } from "../config.js";
 import { UserModel } from "../models/user.modal.js";
+import { SendMail } from "../helper/SendEmail.js";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 export const registerUser = AsyncHandler(async (req, res) => {
@@ -123,12 +130,12 @@ export const RefreshToken = AsyncHandler(async (req, res) => {
         httpOnly: true,        // Cookie not accessible via document.cookie
         secure: config.NODE_ENV !== "development",          // Sent only over HTTPS
         maxAge: 30 * 24 * 60 * 60 * 1000, // Lifetime in milliseconds
-        sameSite: "none",    // "strict" | "lax" | "none"
+        sameSite: "strict",    // "strict" | "lax" | "none"
     }).cookie("RT", refreshToken, {
         httpOnly: true,        // Cookie not accessible via document.cookie
         secure: config.NODE_ENV !== "development",          // Sent only over HTTPS
         maxAge: 31 * 24 * 60 * 60 * 1000, // Lifetime in milliseconds
-        sameSite: "none",    // "strict" | "lax" | "none"
+        sameSite: "strict",    // "strict" | "lax" | "none"
     });
 
     res.status(StatusCodes.OK).json({
@@ -159,4 +166,76 @@ export const SearchEmployees = AsyncHandler(async (req, res) => {
         data: result
     });
 
-})
+});
+
+export const verifyEmail = AsyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        throw new NotFoundError("Email is required", "verifyEmail() method error");
+    };
+
+    const user = await FindUserByEmail(email);
+
+    if (!user) {
+        throw new NotFoundError("user is not found", "verifyEmail() method error");
+    }
+
+    const resetLink = config.NODE_ENV !== "development" ? config.SERVER_URL : config.LOCAL_SERVER_URL;
+    const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: "20min" })
+
+
+    res.status(StatusCodes.OK).json({
+        message: "email send successfully",
+    });
+
+    await SendMail("resetPassword", { name: user?.full_name || user?.email, resetLink: `${resetLink}/api/v1/users/reset-page?token=${token}`, appName: "JPM" }, { email: user.email, subject: "Reset Password" });
+
+});
+
+export const RenderResetPasswordpage = AsyncHandler(async(req,res) => {
+    const {token} = req.query;
+
+    if(!token){
+        throw new NotFoundError("Token is required field","RenderResetPasswordpage() method error");
+    };
+
+    const payload = jwt.verify(token, config.JWT_SECRET);
+    const user  = await FindUserById(payload.id);
+
+
+    if(!user){
+        throw new NotFoundError("User not exist please try again","RenderResetPasswordpage() method error");
+    }
+
+
+    res.sendFile(path.join(__dirname, '../pages', 'reset-password-page.html'));
+
+
+});
+
+export const Resetpassword = AsyncHandler(async (req,res) => {
+    const {token} = req.query;
+    const {password} = req.body;
+
+    if(!token || !password.trim()){
+        throw new BadRequestError("All fields are required");
+    };
+
+    const payload = jwt.verify(token,config.JWT_SECRET);
+    const user = await FindUserById(payload.id);
+
+    if(!user){
+        throw new NotFoundError("User not exist please try again","RenderResetPasswordpage() method error");
+    };
+
+     await UpdateUsersService(user._id,{password});
+
+     res.status(StatusCodes.OK).json({
+        success:true,
+        message:"password reset successfully",
+        redirectUrl:config.NODE_ENV !== "development" ? config.CLIENT_URL : config.LOCAL_CLIENT_URL
+     })
+
+
+});

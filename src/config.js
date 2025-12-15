@@ -11,6 +11,8 @@ class Config {
     JWT_SECRET;
     EMAIL_AUTH;
     EMAIL_PASSWORD;
+    LOCAL_SERVER_URL;
+    SERVER_URL;
     constructor() {
         this.MONGODB_URI = process.env.MONGODB_URI;
         this.NODE_ENV = process.env.NODE_ENV;
@@ -19,6 +21,8 @@ class Config {
         this.JWT_SECRET = process.env.JWT_SECRET;
         this.EMAIL_AUTH = process.env.EMAIL_AUTH;
         this.EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+        this.SERVER_URL = process.env.SERVER_URL;
+        this.LOCAL_SERVER_URL = process.env.LOCAL_SERVER_URL;
     }
 };
 

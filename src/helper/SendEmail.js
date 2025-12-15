@@ -25,7 +25,7 @@ export const SendMail = async (templateName, templateData, ReceiverInfo) => {
       html,
     });
 
-    logger.log("Email sent successfully");
+    logger.info("Email sent successfully");
   } catch (error) {
     logger.error("SendMail error:", error);
   }
