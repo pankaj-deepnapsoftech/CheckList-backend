@@ -1,0 +1,76 @@
+import { StatusCodes } from "http-status-codes";
+import { createAssemblyService, deleteAssemblyService, findAssemblyByName, getAllAssemblyDataService, getAllAssemblyService, searchAllAssemblyService, updateAssemblyService } from "../services/assembly.service.js";
+import { AsyncHandler } from "../utils/asyncHandler.js";
+import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
+
+
+
+export const createAssembly = AsyncHandler(async (req,res) => {
+    const data = req.body;
+    const exist = await findAssemblyByName(data.assembly_name,data.assembly_number);
+    if(exist){
+        throw new BadRequestError("Assembly already created please check","createAssembly() method error")
+    }
+
+    const result = await createAssemblyService(data);
+    res.status(StatusCodes.CREATED).json({
+        message:"Assembly Created Successfully",
+        data:result
+    })
+});
+
+export const getAssemblyData = AsyncHandler(async(req,res)=>{
+    let {limit,page} = req.query;
+    limit = parseInt(limit) || 10;
+    page = parseInt(page) || 1;
+    const skip = (page -1 ) * limit;
+    const data = await getAllAssemblyService(skip,limit);
+    res.status(StatusCodes.OK).json({
+        data
+    })
+});
+
+export const searchAssemblyData = AsyncHandler(async(req,res)=>{
+    let {search,limit,page} = req.query;
+    limit = parseInt(limit) || 10;
+    page = parseInt(page) || 1;
+    const skip = (page -1 ) * limit;
+    const data = await searchAllAssemblyService(search,skip,limit);
+    res.status(StatusCodes.OK).json({
+        data
+    })
+});
+
+export const deleteAssemblyData = AsyncHandler(async (req,res) => {
+    const {id} = req.params;
+    const result = await deleteAssemblyService(id);
+    if(!result){
+        throw new NotFoundError("Assembly not found","deleteAssemblyData () method error");
+    }
+
+    res.status(StatusCodes.OK).json({
+        message:"Assembly Line Deleted Successfully",
+        data:result
+    });
+});
+
+export const updateAssemblyData = AsyncHandler(async (req,res) => {
+    const {id} = req.params;
+    const data = req.body;
+    const result = await updateAssemblyService(id,data);
+    if(!result){
+        throw new NotFoundError("Assembly not found","updateAssemblyData() method error");
+    }
+
+    res.status(StatusCodes.OK).json({
+        message:"Assembly Line Deleted Successfully",
+        data:result
+    });
+});
+
+export const getAllAssemblyData = AsyncHandler(async (req,res) => {
+    const result = await getAllAssemblyDataService();
+    res.status(StatusCodes.OK).json({
+        data:result
+    })
+});

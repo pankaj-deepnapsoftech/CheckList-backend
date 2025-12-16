@@ -6,7 +6,7 @@ const processSchema = new Schema({
     process_no:{type:String,required:true},
 },{timestamps:true});
 
-export const ProcessModel = model("process",processSchema);
+export const ProcessModel = model("Process",processSchema);
 
 
 

@@ -7,6 +7,7 @@ import plantRoutes from "./routes/plant.routes.js";
 import roleRoutes from "./routes/role.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import processRoutes from "./routes/process.routes.js";
+import AssemblyRoutes from "./routes/assembly.routes.js";
 
 
 
@@ -18,6 +19,7 @@ routes.use("/company",Authorization,companyRoutes);
 routes.use("/plant",Authorization,plantRoutes);
 routes.use("/roles",Authorization,roleRoutes);
 routes.use("/process",Authorization,processRoutes);
+routes.use("/assembly",Authorization,AssemblyRoutes);
 
 
 export default routes;
