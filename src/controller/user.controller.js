@@ -50,11 +50,14 @@ export const LoginUser = AsyncHandler(async (req, res) => {
     if (!user) {
         throw new NotFoundError("Invalid credentials", "LoginUser() method error 1")
     }
+    if (user.terminate) {
+        throw new NotFoundError("User Terminated by Admin Please Contact to organization", "LoginUser() method error")
+    }
 
     const isCorrect = await bcrypt.compare(password, user.password);
 
     if (!isCorrect) {
-        throw new NotFoundError("Invalid credentials", "LoginUser() method error 1")
+        throw new NotFoundError("Invalid credentials", "LoginUser() method error 2")
     }
 
     const accessToken = jwt.sign({ email: user.email, id: user._id }, config.JWT_SECRET, { expiresIn: "30days" })
@@ -194,19 +197,19 @@ export const verifyEmail = AsyncHandler(async (req, res) => {
 
 });
 
-export const RenderResetPasswordpage = AsyncHandler(async(req,res) => {
-    const {token} = req.query;
+export const RenderResetPasswordpage = AsyncHandler(async (req, res) => {
+    const { token } = req.query;
 
-    if(!token){
-        throw new NotFoundError("Token is required field","RenderResetPasswordpage() method error");
+    if (!token) {
+        throw new NotFoundError("Token is required field", "RenderResetPasswordpage() method error");
     };
 
     const payload = jwt.verify(token, config.JWT_SECRET);
-    const user  = await FindUserById(payload.id);
+    const user = await FindUserById(payload.id);
 
 
-    if(!user){
-        throw new NotFoundError("User not exist please try again","RenderResetPasswordpage() method error");
+    if (!user) {
+        throw new NotFoundError("User not exist please try again", "RenderResetPasswordpage() method error");
     }
 
 
@@ -215,36 +218,36 @@ export const RenderResetPasswordpage = AsyncHandler(async(req,res) => {
 
 });
 
-export const Resetpassword = AsyncHandler(async (req,res) => {
-    const {token} = req.query;
-    const {password} = req.body;
+export const Resetpassword = AsyncHandler(async (req, res) => {
+    const { token } = req.query;
+    const { password } = req.body;
 
-    if(!token || !password.trim()){
+    if (!token || !password.trim()) {
         throw new BadRequestError("All fields are required");
     };
 
-    const payload = jwt.verify(token,config.JWT_SECRET);
+    const payload = jwt.verify(token, config.JWT_SECRET);
     const user = await FindUserById(payload.id);
 
-    if(!user){
-        throw new NotFoundError("User not exist please try again","RenderResetPasswordpage() method error");
+    if (!user) {
+        throw new NotFoundError("User not exist please try again", "RenderResetPasswordpage() method error");
     };
 
-     await UpdateUsersService(user._id,{password});
+    await UpdateUsersService(user._id, { password });
 
-     res.status(StatusCodes.OK).json({
-        success:true,
-        message:"password reset successfully",
-        redirectUrl:config.NODE_ENV !== "development" ? config.CLIENT_URL : config.LOCAL_CLIENT_URL
-     })
+    res.status(StatusCodes.OK).json({
+        success: true,
+        message: "password reset successfully",
+        redirectUrl: config.NODE_ENV !== "development" ? config.CLIENT_URL : config.LOCAL_CLIENT_URL
+    })
 
 
 });
 
 
-export const GetAllEmployees = AsyncHandler(async (req,res) => {
+export const GetAllEmployees = AsyncHandler(async (req, res) => {
     const result = await GetAllUsersService();
     res.status(StatusCodes.OK).json({
-        data:result
+        data: result
     })
 });
