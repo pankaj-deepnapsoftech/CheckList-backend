@@ -6,12 +6,13 @@ import path from "path";
 
 // ---------------------------- local imports  -------------------------
 import { AsyncHandler } from "../utils/asyncHandler.js";
-import { createUserService, FindUserByEmail, FindUserByEmailOrUserId, FindUserById, GetUsersService, SearchUsersService, UpdateUsersService } from "../services/users.service.js";
+import { createUserService, FindUserByEmail, FindUserByEmailOrUserId, FindUserById, GetAllUsersService, GetUsersService, SearchUsersService, UpdateUsersService } from "../services/users.service.js";
 import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
 import { StatusCodes } from "http-status-codes";
 import { config } from "../config.js";
 import { UserModel } from "../models/user.modal.js";
 import { SendMail } from "../helper/SendEmail.js";
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -238,4 +239,12 @@ export const Resetpassword = AsyncHandler(async (req,res) => {
      })
 
 
+});
+
+
+export const GetAllEmployees = AsyncHandler(async (req,res) => {
+    const result = await GetAllUsersService();
+    res.status(StatusCodes.OK).json({
+        data:result
+    })
 });

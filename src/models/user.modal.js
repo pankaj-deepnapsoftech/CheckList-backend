@@ -12,7 +12,8 @@ const userSchema = new Schema({
     employee_company: { type: Schema.Types.ObjectId, ref: "Company" },
     role: { type: Schema.Types.ObjectId, ref: "Role" },
     terminate: { type: Boolean, required: true, default: false },
-    refresh_token: { type: String }
+    refresh_token: { type: String },
+    is_admin:{type:Boolean,required:true,default:false}
 }, { timestamps: true });
 
 userSchema.pre("save", async function () {

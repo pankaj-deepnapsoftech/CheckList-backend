@@ -8,13 +8,18 @@ export const createUserService = async (data) => {
 };
 
 export const GetUsersService = async (skip,limit) => {
-    const result = await UserModel.find({  role: { $exists: true }}).skip(skip).limit(limit).populate([{path:"role"},{path:"employee_company"},{path:"employee_plant"}]).lean();
+    const result = await UserModel.find({  is_admin: { $exists: false }}).skip(skip).limit(limit).populate([{path:"role"},{path:"employee_company"},{path:"employee_plant"}]).lean();
+    return result;
+};
+
+export const GetAllUsersService = async () => {
+    const result = await UserModel.find({  is_admin: { $exists: false }}).select("email user_id").lean();
     return result;
 };
 
 
 export const SearchUsersService = async (search,skip,limit) => {
-    const result = await UserModel.find({  role: { $exists: true },$or:[{email:{$regex:search,$options:'i'}},{user_id:{$regex:search,$options:'i'}}]}).skip(skip).limit(limit).populate([{path:"role"},{path:"employee_company"},{path:"employee_plant"}]).lean();
+    const result = await UserModel.find({  is_admin: { $exists: false },$or:[{email:{$regex:search,$options:'i'}},{user_id:{$regex:search,$options:'i'}}]}).skip(skip).limit(limit).populate([{path:"role"},{path:"employee_company"},{path:"employee_plant"}]).lean();
     return result;
 };
 
