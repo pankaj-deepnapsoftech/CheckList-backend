@@ -63,7 +63,7 @@ export const updateAssemblyData = AsyncHandler(async (req,res) => {
     }
 
     res.status(StatusCodes.OK).json({
-        message:"Assembly Line Deleted Successfully",
+        message:"Assembly Line updated Successfully",
         data:result
     });
 });

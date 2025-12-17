@@ -1,11 +1,18 @@
 import { Router } from "express";
 
 // ---------------------------- local imports ---------------------------
-import { CreateChecklistData } from "../controller/checklist.controller.js";
+import { CreateChecklistData, DeleteCheckList, GetCheckList, searchCheckList, UpdateCheckListData } from "../controller/checklist.controller.js";
+import { Validater } from "../middleware/validator.js";
+import { checkListValidationSchema } from "../validation/checkList.validation.js";
 
 const routes = Router();
 
-routes.route("/create-checklist").post(CreateChecklistData)
+routes.route("/create-checklist").post(Validater(checkListValidationSchema),CreateChecklistData);
+routes.route("/update-checklist/:id").put(Validater(checkListValidationSchema),UpdateCheckListData);
+routes.route("/delete-checklist/:id").delete(DeleteCheckList);
+routes.route("/get-checkitem").get(GetCheckList);
+routes.route("/search-checkitem").get(searchCheckList);
+
 
 
 export default routes

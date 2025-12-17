@@ -9,6 +9,7 @@ import usersRoutes from "./routes/users.routes.js";
 import processRoutes from "./routes/process.routes.js";
 import AssemblyRoutes from "./routes/assembly.routes.js";
 import PartRoutes from "./routes/parts.routes.js";
+import CheckItemRoutes from "./routes/checklist.routes.js";
 
 
 
@@ -23,6 +24,7 @@ routes.use("/roles",Authorization,roleRoutes);
 routes.use("/process",Authorization,processRoutes);
 routes.use("/assembly",Authorization,AssemblyRoutes);
 routes.use("/parts",Authorization,PartRoutes);
+routes.use("/checkitem",Authorization,CheckItemRoutes)
 
 
 export default routes;

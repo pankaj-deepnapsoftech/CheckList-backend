@@ -17,12 +17,12 @@ export const DeleteCheckListService = async (id) => {
 };
 
 export const getCheckListDataService = async (skip,limit) => {
-    const result = await CheckListModal.find({}).sort({_id:-1}).skip(skip).limit(limit).lean();
+    const result = await CheckListModal.find({}).sort({_id:-1}).skip(skip).limit(limit).populate({path:"process",select:"process_name process_no"}).lean();
     return result;
 };
 
-export const SearchCheckListDataService = async (search,process,skip,limit) => {
-    const result = await CheckListModal.find(process ? {process,item:{$regex:search,$options:"i"}} : {item:{$regex:search,$options:"i"}}).sort({_id:-1}).skip(skip).limit(limit).lean();
+export const SearchCheckListDataService = async (search="",process="",skip,limit) => {
+    const result = await CheckListModal.find(process ? {process,item:{$regex:search,$options:"i"}} : {item:{$regex:search,$options:"i"}}).sort({_id:-1}).skip(skip).limit(limit).populate({path:"process",select:"process_name process_no"}).lean();
     return result;
 };
 
