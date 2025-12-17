@@ -22,7 +22,7 @@ routes.use("/plant",Authorization,plantRoutes);
 routes.use("/roles",Authorization,roleRoutes);
 routes.use("/process",Authorization,processRoutes);
 routes.use("/assembly",Authorization,AssemblyRoutes);
-routes.use("/parts",PartRoutes);
+routes.use("/parts",Authorization,PartRoutes);
 
 
 export default routes;
