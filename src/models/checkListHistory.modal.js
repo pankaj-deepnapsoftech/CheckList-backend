@@ -10,6 +10,12 @@ const checkListHistorySchema = new Schema({
     result: { type: String, required: true }
 }, { timestamps: true });
 
+checkListHistorySchema.index({
+    checkList:1,
+    assembly:1,
+    process_id:1,
+    result:1
+});
 
 export const CheckListHistoryModal = model("CheckListHistory", checkListHistorySchema);
 
