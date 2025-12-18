@@ -24,11 +24,7 @@ export const CreateChecklistData = AsyncHandler(async (req, res) => {
 export const UpdateCheckListData = AsyncHandler(async (req, res) => {
     const { id } = req.params;
     const data = req.body;
-    const exist = await FindChecklistByName(data?.item);
 
-    if (exist) {
-        throw new BadRequestError("Item already exist", "UpdateCheckListData() method error");
-    }
     const result = await updateChecklistService(id, data);
     if (!result) {
         throw new NotFoundError("Item not found", "UpdateCheckListData() method error")
