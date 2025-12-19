@@ -16,6 +16,8 @@ const userSchema = new Schema({
     is_admin:{type:Boolean,required:true,default:false}
 }, { timestamps: true });
 
+userSchema.index({email:1,user_id:1,employee_plant:1,employee_company:1,role:1});
+
 userSchema.pre("save", async function () {
     if (this.isNew && this.role) {
         const lastUser = await mongoose
