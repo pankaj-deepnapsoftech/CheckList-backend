@@ -1,7 +1,7 @@
 import {Router} from "express";
 
 // ----------------------------- 
-import { GetAllCardsData } from "../controller/dashboard.controller";
+import { GetAllCardsData } from "../controller/dashboard.controller.js";
 
 
 const routes = Router();
