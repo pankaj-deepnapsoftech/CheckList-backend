@@ -18,7 +18,8 @@ checkListHistorySchema.index({
     checkList:1,
     assembly:1,
     process_id:1,
-    result:1
+    result:1,
+    status:1
 });
  
 export const CheckListHistoryModal = model("CheckListHistory", checkListHistorySchema);
