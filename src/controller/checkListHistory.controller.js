@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { createChecklistHistory, findTodayChecklistHistory, GetCheckListHistory, UpdateCheckListHistory } from "../services/checklistHistory.service.js";
+import { createChecklistHistory, findTodayChecklistHistory,  UpdateCheckListHistory } from "../services/checklistHistory.service.js";
 import { AsyncHandler } from "../utils/asyncHandler.js";
 import { BadRequestError, NotFoundError } from "../utils/errorHandler.js";
 
@@ -59,17 +59,7 @@ export const updateCheckListHistory = AsyncHandler(async (req,res) => {
     });
 });
 
-export const GetCheckHistoryData = AsyncHandler(async (req,res) => {
-    const user = req.currentUser;
-    let {page,limit} = req.query;
-    page = parseInt(page) || 1;
-    limit = parseInt(limit) || 10;
-    const skip  = (page -1) * limit;
-    const result = await GetCheckListHistory(user?.is_admin,user?._id,skip,limit);
-    res.status(StatusCodes.OK).json({
-        data:result
-    })
-});
+
 
 
 
