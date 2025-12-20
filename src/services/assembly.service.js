@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { AssemblyModal } from "../models/AssemblyLine.modal.js"
 
 
- 
+
 export const createAssemblyService = async (data) => {
     const result = await AssemblyModal.create(data);
     return result;
@@ -19,7 +19,13 @@ export const deleteAssemblyService = async (id) => {
 };
 
 export const getAllAssemblyService = async (skip, limit) => {
-    const result = await AssemblyModal.find({}).sort({ _id: -1 }).skip(skip).limit(limit).populate([{ path: "company_id", select: "company_name company_address" }, { path: "plant_id", select: "plant_name plant_address" }, { path: "responsibility", select: "email full_name email user_id desigination" }, { path: "process_id", select: "process_name process_no" }]).lean();
+    const result = await AssemblyModal.find({}).sort({ _id: -1 }).skip(skip).limit(limit).populate([
+        { path: "company_id", select: "company_name company_address" },
+         { path: "plant_id", select: "plant_name plant_address" }, 
+         { path: "responsibility", select: "email full_name email user_id desigination" }, 
+         { path: "process_id", select: "process_name process_no" },
+         { path: "part_id", select: "part_number part_name" }
+        ]).lean();
     return result;
 };
 
@@ -82,7 +88,8 @@ export const searchAllAssemblyService = async (
             {
                 path: "process_id",
                 select: "process_name process_no"
-            }
+            },
+            { path: "part_id", select: "part_number part_name" }
         ])
         .lean();
 
@@ -354,6 +361,137 @@ export const getAssemblyLineTodayReport = async (admin, user_id, skip, limit) =>
     return result;
 };
 
+export const GetAssemblyLineDataReport = async (admin, user_id) => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await AssemblyModal.aggregate([
+        {
+            $match: admin ? {} : { responsibility: new mongoose.Types.ObjectId(user_id) }
+        },
+
+        /* ================= LOOKUP PROCESSES ================= */
+        {
+            $lookup: {
+                from: "processes",
+                localField: "process_id",
+                foreignField: "_id",
+                as: "process_id",
+                let: { assemblyId: "$_id" },
+                pipeline: [
+                    {
+                        $project: {
+                            process_name: 1,
+                            process_no: 1
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "checklisthistories",
+                            let: { processId: "$_id", assemblyId: "$$assemblyId" },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $and: [
+                                                { $eq: ["$process_id", "$$processId"] },
+                                                { $eq: ["$assembly", "$$assemblyId"] }
+                                            ]
+                                        },
+                                        createdAt: { $gte: startOfDay, $lte: endOfDay }
+                                    }
+                                },
+                                {
+                                    $project: {
+                                        status: 1,
+                                        is_error: 1
+                                    }
+                                }
+                            ],
+                            as: "today"
+                        }
+                    },
+
+                    /* ===== PROCESS LEVEL COUNTS ===== */
+                    {
+                        $addFields: {
+                            total_checked: {
+                                $size: {
+                                    $filter: {
+                                        input: "$today",
+                                        as: "t",
+                                        cond: { $ne: ["$$t.status", "Unchecked"] }
+                                    }
+                                }
+                            },
+                            total_unchecked: {
+                                $size: {
+                                    $filter: {
+                                        input: "$today",
+                                        as: "t",
+                                        cond: { $eq: ["$$t.status", "Unchecked"] }
+                                    }
+                                }
+                            },
+                            total_errors: {
+                                $size: {
+                                    $filter: {
+                                        input: "$today",
+                                        as: "t",
+                                        cond: { $eq: ["$$t.is_error", true] }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+
+        /* ================= ASSEMBLY LEVEL COUNTS ================= */
+        {
+            $addFields: {
+                assembly_checked: {
+                    $sum: "$process_id.total_checked"
+                },
+                assembly_unchecked: {
+                    $sum: "$process_id.total_unchecked"
+                },
+                assembly_errors: {
+                    $sum: "$process_id.total_errors"
+                }
+            }
+        },
+
+        /* ================= FINAL SUMMARY ================= */
+        {
+            $facet: {
+                data: [{ $sort: { createdAt: -1 } }],
+                summary: [
+                    {
+                        $group: {
+                            _id: null,
+                            total_assemblies: { $sum: 1 },
+                            total_checked: { $sum: "$assembly_checked" },
+                            total_unchecked: { $sum: "$assembly_unchecked" },
+                            total_errors: { $sum: "$assembly_errors" }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                summary: { $arrayElemAt: ["$summary", 0] }
+            }
+        }
+    ]);
+
+    return result[0].summary;
+};
 
 
 

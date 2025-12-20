@@ -11,7 +11,7 @@ const checkListHistorySchema = new Schema({
     result: { type: String, required: true },
     is_error:{type:Boolean,required:true,default:false},
     description:{type:String},
-    status:{type:String,required:true,default:"Unchecked",enum:["Checked","Unchecked"]}
+    status:{type:String,required:true,default:"Unchecked",enum:["Checked","Unchecked","Resolved"]}
 }, { timestamps: true });
 
 checkListHistorySchema.index({
