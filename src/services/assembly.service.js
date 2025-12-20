@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { AssemblyModal } from "../models/AssemblyLine.modal.js"
 
 
-
+ 
 export const createAssemblyService = async (data) => {
     const result = await AssemblyModal.create(data);
     return result;
