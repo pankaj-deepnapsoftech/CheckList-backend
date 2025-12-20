@@ -21,10 +21,11 @@ export const createAssembly = AsyncHandler(async (req, res) => {
 
 export const getAssemblyData = AsyncHandler(async (req, res) => {
     let { limit, page } = req.query;
+    const user = req.currentUser;
     limit = parseInt(limit) || 10;
     page = parseInt(page) || 1;
     const skip = (page - 1) * limit;
-    const data = await getAllAssemblyService(skip, limit);
+    const data = await getAllAssemblyService(user?.is_admin,user?._id,skip, limit);
     res.status(StatusCodes.OK).json({
         data
     })
@@ -32,10 +33,11 @@ export const getAssemblyData = AsyncHandler(async (req, res) => {
 
 export const searchAssemblyData = AsyncHandler(async (req, res) => {
     let { part,process,user,plant,company,search, limit, page } = req.query;
+    const userData = req.currentUser;
     limit = parseInt(limit) || 10;
     page = parseInt(page) || 1;
     const skip = (page - 1) * limit;
-    const data = await searchAllAssemblyService(search?.trim(),part,process,user,plant,company, skip, limit);
+    const data = await searchAllAssemblyService(userData?.is_admin,userData?._id,search?.trim(),part,process,user,plant,company, skip, limit);
     res.status(StatusCodes.OK).json({
         data
     })
