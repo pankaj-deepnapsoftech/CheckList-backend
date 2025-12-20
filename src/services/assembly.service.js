@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { AssemblyModal } from "../models/AssemblyLine.modal.js"
 
 
- 
+
 export const createAssemblyService = async (data) => {
     const result = await AssemblyModal.create(data);
     return result;
@@ -354,6 +354,76 @@ export const getAssemblyLineTodayReport = async (admin, user_id, skip, limit) =>
     return result;
 };
 
+export const GetAssemblyLineDataReport = async (admin, user_id,) => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const result = await AssemblyModal.aggregate([
+        {
+            $match: admin ? {} : { responsibility: new mongoose.Types.ObjectId(user_id) }
+        },
+        {
+            $lookup: {
+                from: "processes",
+                localField: "process_id",
+                foreignField: "_id",
+                as: "process_id",
+                let: {
+                    assemblyId: "$_id"   // 👈 ROOT assembly _id
+                },
+                pipeline: [
+                    {
+                        $project: {
+                            process_name: 1,
+                            process_no: 1
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "checklisthistories",
+                            let: { processId: "$_id", assemblyId: "$$assemblyId" },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $and: [
+                                                { $eq: ["$process_id", "$$processId"] },
+                                                { $eq: ["$assembly", "$$assemblyId"] }
+                                            ]
+
+                                        },
+                                        // assembly:"$$ROOT._id",
+                                        createdAt: { $gte: startOfDay, $lte: endOfDay },
+                                    }
+                                },
+                                {
+                                    $lookup: {
+                                        from: "checklists",
+                                        localField: "checkList",
+                                        foreignField: "_id",
+                                        as: "checkList",
+                                    }
+                                },
+                                {
+                                    $project: {
+                                        checkList: 1,
+                                        result: 1,
+                                        is_error: 1,
+                                        description: 1
+                                    }
+                                }
+                            ],
+                            as: "today"
+                        }
+                    }
+                ]
+            }
+        },
+    ]);
+    return result;
+};
 
 
 
