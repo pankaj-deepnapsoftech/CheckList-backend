@@ -11,7 +11,8 @@ import AssemblyRoutes from "./routes/assembly.routes.js";
 import PartRoutes from "./routes/parts.routes.js";
 import CheckItemRoutes from "./routes/checklist.routes.js";
 import CheckListHistoryRoutes from "./routes/checkListHostory.routes.js";
-import DashboardRoutes from "./routes/dashboards.routes.js"
+import DashboardRoutes from "./routes/dashboards.routes.js";
+import TypesRoutes from "./routes/types.routes.js";
 
 
 
@@ -29,6 +30,7 @@ routes.use("/parts",             Authorization, PartRoutes);
 routes.use("/checkitem",         Authorization, CheckItemRoutes);
 routes.use("/checkitem-history", Authorization, CheckListHistoryRoutes);
 routes.use("/dashboard",         Authorization, DashboardRoutes);
+routes.use("/types",             Authorization,TypesRoutes);
 
 
 
