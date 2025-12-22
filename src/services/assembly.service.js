@@ -545,7 +545,7 @@ export const getAssemblyLineTodayReport = async (
         }
     ]);
 
-    return result[0];
+    return result;
 };
 
 
