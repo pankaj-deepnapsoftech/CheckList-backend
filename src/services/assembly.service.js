@@ -372,15 +372,14 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
 
 
 export const getAssemblyLineTodayReport = async (
-  admin,
-  user_id,
-  skip,
-  limit,
-  startdate,
-  endDate
+    admin,
+    user_id,
+    skip,
+    limit,
+    startdate,
+    endDate
 ) => {
 
-    // ✅ If dates not provided, use today's date
     const today = new Date();
 
     const startOfDay = startdate ? new Date(startdate) : new Date(today);
@@ -390,9 +389,11 @@ export const getAssemblyLineTodayReport = async (
     endOfDay.setHours(23, 59, 59, 999);
 
     const result = await AssemblyModal.aggregate([
+        // ---------- Access Control ----------
         {
             $match: admin ? {} : { responsibility: new mongoose.Types.ObjectId(user_id) }
         },
+
         { $skip: skip },
         { $limit: limit },
 
@@ -406,9 +407,9 @@ export const getAssemblyLineTodayReport = async (
                 pipeline: [
                     {
                         $project: {
-                            company_address: 1,
                             company_name: 1,
-                            description: 1,
+                            company_address: 1,
+                            description: 1
                         }
                     }
                 ]
@@ -458,19 +459,26 @@ export const getAssemblyLineTodayReport = async (
             $addFields: {
                 responsibility: { $arrayElemAt: ["$responsibility", 0] },
                 company_id: { $arrayElemAt: ["$company_id", 0] },
-                plant_id: { $arrayElemAt: ["$plant_id", 0] },
+                plant_id: { $arrayElemAt: ["$plant_id", 0] }
             }
         },
 
-        // ---------- Process + Today Checklist ----------
+        // ---------- Process → Checklist → ChecklistHistory ----------
         {
             $lookup: {
                 from: "processes",
-                localField: "process_id",
-                foreignField: "_id",
-                as: "process_id",
-                let: { assemblyId: "$_id" },
+                let: {
+                    processIds: "$process_id",
+                    assemblyId: "$_id"   // ✅ root access
+                },
                 pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $in: ["$_id", "$$processIds"]
+                            }
+                        }
+                    },
                     {
                         $project: {
                             process_name: 1,
@@ -479,48 +487,60 @@ export const getAssemblyLineTodayReport = async (
                     },
                     {
                         $lookup: {
-                            from: "checklisthistories",
+                            from: "checklists",
                             let: {
                                 processId: "$_id",
-                                assemblyId: "$$assemblyId"
+                                assemblyId: "$$assemblyId" // ✅ re-pass root
                             },
                             pipeline: [
                                 {
                                     $match: {
                                         $expr: {
-                                            $and: [
-                                                { $eq: ["$process_id", "$$processId"] },
-                                                { $eq: ["$assembly", "$$assemblyId"] }
-                                            ]
-                                        },
-                                        createdAt: {
-                                            $gte: startOfDay,
-                                            $lte: endOfDay
+                                            $eq: ["$process", "$$processId"]
                                         }
                                     }
                                 },
                                 {
                                     $lookup: {
-                                        from: "checklists",
-                                        localField: "checkList",
-                                        foreignField: "_id",
-                                        as: "checkList"
-                                    }
-                                },
-                                {
-                                    $project: {
-                                        checkList: 1,
-                                        result: 1,
-                                        is_error: 1,
-                                        description: 1,
-                                        status:1
+                                        from: "checklisthistories",
+                                        let: {
+                                            processId: "$$processId",
+                                            assemblyId: "$$assemblyId"
+                                        },
+                                        pipeline: [
+                                            {
+                                                $match: {
+                                                    $expr: {
+                                                        $and: [
+                                                            { $eq: ["$process_id", "$$processId"] },
+                                                            { $eq: ["$assembly", "$$assemblyId"] }
+                                                        ]
+                                                    },
+                                                    createdAt: {
+                                                        $gte: startOfDay,
+                                                        $lte: endOfDay
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                $project: {
+                                                    checkList: 1,
+                                                    result: 1,
+                                                    is_error: 1,
+                                                    description: 1,
+                                                    status: 1
+                                                }
+                                            }
+                                        ],
+                                        as: "check_items_history"
                                     }
                                 }
                             ],
-                            as: "check_items"
+                            as: "check_list_items"
                         }
                     }
-                ]
+                ],
+                as: "process_id"
             }
         }
     ]);
