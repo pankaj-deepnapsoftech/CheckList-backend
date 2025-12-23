@@ -7,7 +7,7 @@ export const CreateNotification = async (data) => {
 };
 
 export const GetNotification = async (user,skip,limit) => {
-    const result = await NotificationModal.find({reciverId:user}).sort({_id:-1}).skip(skip).limit(limit).lean();
+    const result = await NotificationModal.find({reciverId:user}).sort({_id:-1}).skip(skip).limit(limit).populate({path:"senderId",select:"desigination user_id email full_name"}).lean();
     return result;
 };
 
