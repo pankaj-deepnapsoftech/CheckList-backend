@@ -70,10 +70,10 @@ export const updateCheckListHistory = AsyncHandler(async (req,res) => {
     });
 });
 
-
 export const getAllErrorData = AsyncHandler(async (req,res) => {
   const user = req.currentUser;
-  const result = await GetAllErrorsHistory(user.is_admin,user._id);
+  const {startDate,endDate} = req.query;
+  const result = await GetAllErrorsHistory(startDate,endDate,user.is_admin,user._id);
   res.status(StatusCodes.OK).json({
     data:result
   })

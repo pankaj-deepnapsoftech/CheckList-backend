@@ -36,12 +36,14 @@ export const UpdateCheckListHistory = async (id, data) => {
   return result
 };
 
-export const GetAllErrorsHistory = async (admin, user) => {
+export const GetAllErrorsHistory = async (startDate,endDate,admin, user) => {
 
-  const startOfDay = new Date();
+  const today = new Date();
+
+  const startOfDay =startDate ? new Date(startDate) : new Date(today);
   startOfDay.setHours(0, 0, 0, 0);
 
-  const endOfDay = new Date();
+  const endOfDay = endDate ?  new Date(endDate) : new Date(today);
   endOfDay.setHours(23, 59, 59, 999);
   const result = await CheckListHistoryModal.find(admin ? {
     is_error: true, createdAt: {
@@ -65,7 +67,7 @@ export const GetAllErrorsHistory = async (admin, user) => {
     },
   ])
   return result;
-}
+};
 
 
 
