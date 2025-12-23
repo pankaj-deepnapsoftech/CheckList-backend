@@ -21,7 +21,7 @@ export const UpdateNotification = async(id,data) => {
     return result;
 };
 
-export const GetUpdateAll = async () => {
-    const result = await NotificationModal.updateMany();
+export const GetUpdateAll = async (id,data) => {
+    const result = await NotificationModal.updateMany({reciverId:id},data);
     return result;
 };

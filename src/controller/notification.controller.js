@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
-import { GetNotification } from "../services/notification.service.js";
+import { GetNotification, GetUpdateAll, UpdateNotification } from "../services/notification.service.js";
 import { AsyncHandler } from "../utils/asyncHandler.js";
+import { NotFoundError } from "../utils/errorHandler.js";
 
 
 export const getNotificationData = AsyncHandler(async (req,res) => {
@@ -13,3 +14,46 @@ export const getNotificationData = AsyncHandler(async (req,res) => {
         data:result
     });
 });
+
+
+export const UpdateNotificationData = AsyncHandler(async (req,res) => {
+    const {id} = req.params;
+    const data = req.body;
+
+    const result = await UpdateNotification(id,data);
+    if(!result){
+        throw new NotFoundError("data not found","UpdateNotificationData() method error");
+    };
+    res.status(StatusCodes.OK).json({
+        message:"Data Updated successfully",
+        data:result
+    });
+});
+
+
+export const ReadAllNotification = AsyncHandler(async (req,res) => {
+    const data = req.body;
+    const result = await GetUpdateAll(data.reciverId,data);
+    if(!result){
+        throw new NotFoundError("data not found","UpdateNotificationData() method error");
+    };
+    res.status(StatusCodes.OK).json({
+        message:"Data Updated successfully",
+        data:result
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
