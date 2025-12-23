@@ -8,7 +8,7 @@ export const getNotificationData = AsyncHandler(async (req,res) => {
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
     const skip = (page -1 )*limit;
-    const result = await GetNotification(skip,limit);
+    const result = await GetNotification(req.currentUser?._id,skip,limit);
     res.status(StatusCodes.OK).json({
         data:result
     });

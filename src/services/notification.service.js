@@ -6,8 +6,8 @@ export const CreateNotification = async (data) => {
     return result;
 };
 
-export const GetNotification = async (skip,limit) => {
-    const result = await NotificationModal.find().sort({_id:-1}).skip(skip).limit(limit);
+export const GetNotification = async (user,skip,limit) => {
+    const result = await NotificationModal.find({reciverId:user}).sort({_id:-1}).skip(skip).limit(limit);
     return result;
 };
 
