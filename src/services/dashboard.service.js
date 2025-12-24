@@ -438,6 +438,174 @@ export const GetMonthlyPerformance = async (admin, user) => {
 };
 
 
+export const GetDailyErrorsAssembly = async (admin, user, date = new Date()) => {
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await AssemblyModal.aggregate([
+
+        /* ================= ASSEMBLY FILTER ================= */
+        {
+            $match: admin ? {} : { responsibility: new mongoose.Types.ObjectId(user) }
+        },
+
+        /* ================= LOOKUP CHECKLIST (DAY ONLY) ================= */
+        {
+            $lookup: {
+                from: "checklisthistories",
+                let: { assemblyId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$assembly", "$$assemblyId"] },
+                                    { $gte: ["$createdAt", startOfDay] },
+                                    { $lte: ["$createdAt", endOfDay] }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        $project: {
+                            process_id: 1,
+                            is_error: 1,
+                            is_resolved: 1
+                        }
+                    }
+                ],
+                as: "checks"
+            }
+        },
+
+        /* ================= ASSEMBLY LEVEL STATUS ================= */
+        {
+            $addFields: {
+                has_error: {
+                    $gt: [
+                        {
+                            $size: {
+                                $filter: {
+                                    input: "$checks",
+                                    as: "c",
+                                    cond: { $eq: ["$$c.is_error", true] }
+                                }
+                            }
+                        },
+                        0
+                    ]
+                },
+                has_unresolved_error: {
+                    $gt: [
+                        {
+                            $size: {
+                                $filter: {
+                                    input: "$checks",
+                                    as: "c",
+                                    cond: {
+                                        $and: [
+                                            { $eq: ["$$c.is_error", true] },
+                                            { $eq: ["$$c.is_resolved", false] }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        0
+                    ]
+                }
+            }
+        },
+
+        /* ================= FINAL CLASSIFICATION ================= */
+        {
+            $addFields: {
+                still_error: { $cond: ["$has_unresolved_error", 1, 0] },
+                resolved: {
+                    $cond: [
+                        {
+                            $and: [
+                                "$has_error",
+                                { $eq: ["$has_unresolved_error", false] }
+                            ]
+                        },
+                        1,
+                        0
+                    ]
+                }
+            }
+        },
+
+        /* ================= FACET ================= */
+        {
+            $facet: {
+
+                /* ===== ASSEMBLY SUMMARY ===== */
+                assembly_summary: [
+                    {
+                        $group: {
+                            _id: null,
+                            error_assemblies: {
+                                $sum: { $cond: ["$has_error", 1, 0] }
+                            },
+                            still_error_assemblies: { $sum: "$still_error" },
+                            resolved_assemblies: { $sum: "$resolved" }
+                        }
+                    },
+                    { $project: { _id: 0 } }
+                ],
+
+                /* ===== TOP 5 ERROR PROCESSES ===== */
+                top_error_processes: [
+                    { $unwind: "$checks" },
+                    { $match: { "checks.is_error": true } },
+                    {
+                        $group: {
+                            _id: "$checks.process_id",
+                            error_count: { $sum: 1 }
+                        }
+                    },
+                    { $sort: { error_count: -1 } },
+                    { $limit: 5 },   // ✅ TOP FIVE
+                    {
+                        $lookup: {
+                            from: "processes",
+                            localField: "_id",
+                            foreignField: "_id",
+                            as: "process"
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            process_id: "$_id",
+                            process_name: { $arrayElemAt: ["$process.process_name", 0] },
+                            error_count: 1
+                        }
+                    }
+                ]
+            }
+        },
+
+        /* ================= FINAL SHAPE ================= */
+        {
+            $project: {
+                assembly_summary: { $arrayElemAt: ["$assembly_summary", 0] },
+                top_error_processes: 1
+            }
+        }
+    ]);
+
+    return result[0];
+};
+
+
+
+
 
 
 

@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { allCardsData, GetDailyAssemblyStatus, GetMonthlyPerformance, GetMonthlyTrend } from "../services/dashboard.service.js";
+import { allCardsData, GetDailyAssemblyStatus, GetDailyErrorsAssembly, GetMonthlyPerformance, GetMonthlyTrend } from "../services/dashboard.service.js";
 import { AsyncHandler } from "../utils/asyncHandler.js";
 
 
@@ -38,6 +38,14 @@ export const getAllActiveAssembyMonthly = AsyncHandler(async (req,res) => {
     });
 });
 
+
+export const getAllAssemblyErrorHistory = AsyncHandler(async (req,res) => {
+    const user = req.currentUser;
+    const result = await GetDailyErrorsAssembly(user?.is_admin, user?._id);
+    res.status(StatusCodes.OK).json({
+        data: result
+    });
+});
 
 
 

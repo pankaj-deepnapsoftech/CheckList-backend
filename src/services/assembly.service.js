@@ -235,12 +235,12 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
 
     const result = await AssemblyModal.aggregate([
 
-        // 1️⃣ Filter by user
+        /* ================= FILTER ================= */
         {
             $match: admin ? {} : { responsibility: new mongoose.Types.ObjectId(user_id) }
         },
 
-        // 2️⃣ Lookup processes + today checklist
+        /* ================= LOOKUP PROCESSES + TODAY CHECKLIST ================= */
         {
             $lookup: {
                 from: "processes",
@@ -266,41 +266,29 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
                                         },
                                         createdAt: { $gte: startOfDay, $lte: endOfDay }
                                     }
+                                },
+                                {
+                                    $project: {
+                                        is_error: 1,
+                                        is_resolved: 1
+                                    }
                                 }
                             ],
                             as: "today"
                         }
                     },
+
+                    /* ===== PROCESS LEVEL FLAGS ===== */
                     {
                         $addFields: {
-                            is_checked: {
-                                $gt: [
-                                    {
-                                        $size: {
-                                            $filter: {
-                                                input: "$today",
-                                                as: "t",
-                                                cond: { $ne: ["$$t.status", "Unchecked"] }
-                                            }
-                                        }
-                                    },
-                                    0
-                                ]
-                            },
-                            is_unchecked: {
-                                $gt: [
-                                    {
-                                        $size: {
-                                            $filter: {
-                                                input: "$today",
-                                                as: "t",
-                                                cond: { $eq: ["$$t.status", "Unchecked"] }
-                                            }
-                                        }
-                                    },
-                                    0
-                                ]
-                            },
+
+                            // process has any checklist today
+                            is_checked: { $gt: [{ $size: "$today" }, 0] },
+
+                            // process has NO checklist today
+                            is_unchecked: { $eq: [{ $size: "$today" }, 0] },
+
+                            // process has any error
                             has_error: {
                                 $gt: [
                                     {
@@ -315,14 +303,21 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
                                     0
                                 ]
                             },
-                            is_resolved: {
+
+                            // process has unresolved error
+                            has_unresolved_error: {
                                 $gt: [
                                     {
                                         $size: {
                                             $filter: {
                                                 input: "$today",
                                                 as: "t",
-                                                cond: { $eq: ["$$t.status", "Resolved"] }
+                                                cond: {
+                                                    $and: [
+                                                        { $eq: ["$$t.is_error", true] },
+                                                        { $eq: ["$$t.is_resolved", false] }
+                                                    ]
+                                                }
                                             }
                                         }
                                     },
@@ -336,9 +331,11 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
             }
         },
 
-        // 3️⃣ Assembly-level BOOLEAN decision
+        /* ================= ASSEMBLY LEVEL DECISION ================= */
         {
             $addFields: {
+
+                // ✔ all processes checked
                 assembly_checked: {
                     $cond: [
                         { $not: { $in: [true, "$processes.is_unchecked"] } },
@@ -346,6 +343,8 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
                         0
                     ]
                 },
+
+                // ❌ any process unchecked
                 assembly_unchecked: {
                     $cond: [
                         { $in: [true, "$processes.is_unchecked"] },
@@ -353,6 +352,8 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
                         0
                     ]
                 },
+
+                // 🔴 any process has error
                 assembly_error: {
                     $cond: [
                         { $in: [true, "$processes.has_error"] },
@@ -360,9 +361,16 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
                         0
                     ]
                 },
+
+                // 🟢 all errors resolved
                 assembly_resolved: {
                     $cond: [
-                        { $not: { $in: [false, "$processes.is_resolved"] } },
+                        {
+                            $and: [
+                                { $in: [true, "$processes.has_error"] },
+                                { $not: { $in: [true, "$processes.has_unresolved_error"] } }
+                            ]
+                        },
                         1,
                         0
                     ]
@@ -370,7 +378,7 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
             }
         },
 
-        // 4️⃣ FINAL SUMMARY (COUNT ASSEMBLIES)
+        /* ================= FINAL SUMMARY ================= */
         {
             $group: {
                 _id: null,
@@ -382,15 +390,12 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
             }
         },
         {
-            $project: {
-                _id: 0
-            }
+            $project: { _id: 0 }
         }
     ]);
 
     return result[0];
 };
-
 
 
 export const getAssemblyLineTodayReport = async (
