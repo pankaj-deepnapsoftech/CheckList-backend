@@ -10,7 +10,7 @@ const notificationSchema = new Schema({
     assembly: { type: Schema.Types.ObjectId, ref: "Assembly", required: true },
     process_id: { type: Schema.Types.ObjectId, ref: "Process", required: true },
     checkList: { type: Schema.Types.ObjectId, ref: "Checklist", required: true },
-});
+},{timestamps:true});
 
 export const NotificationModal = model("Notification", notificationSchema);
 

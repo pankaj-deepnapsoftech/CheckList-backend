@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { AssemblyModal } from "../models/AssemblyLine.modal.js"
 import { PartModal } from "../models/Part.modal.js";
 import { ProcessModel } from "../models/process.modal.js";
@@ -71,8 +72,11 @@ export const allCardsData = async () => {
 };
 
 
-export const GetMonthlyTrend = async () => {
+export const GetMonthlyTrend = async (admin,user) => {
     const result = await AssemblyModal.aggregate([
+        {
+            $match: admin ? {} : {responsibility:new mongoose.Types.ObjectId(user)}
+        },
         // 1️⃣ Lookup checklist histories
         {
             $lookup: {
@@ -177,7 +181,7 @@ export const GetMonthlyTrend = async () => {
 };
 
 
-export const GetDailyAssemblyStatus = async (date = new Date()) => {
+export const GetDailyAssemblyStatus = async (admin,user,date = new Date()) => {
 
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -186,6 +190,9 @@ export const GetDailyAssemblyStatus = async (date = new Date()) => {
     endOfDay.setHours(23, 59, 59, 999);
 
     const result = await AssemblyModal.aggregate([
+        {
+            $match: admin ? {} : {responsibility:new mongoose.Types.ObjectId(user)}
+        },
         {
             $lookup:{
                 from:"companies",
@@ -327,6 +334,13 @@ export const GetDailyAssemblyStatus = async (date = new Date()) => {
 
     return result;
 };
+
+export const Get
+
+
+
+
+
 
 
 
