@@ -177,6 +177,85 @@ export const GetMonthlyTrend = async () => {
 };
 
 
+export const GetDailyAssemblyStatus = async (date = new Date()) => {
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await AssemblyModal.aggregate([
+        {
+
+        },
+
+        // 1️⃣ Lookup checklist histories ONLY for the given day
+        {
+            $lookup: {
+                from: "checklisthistories",
+                let: { assemblyId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$assembly", "$$assemblyId"] },
+                                    { $gte: ["$createdAt", startOfDay] },
+                                    { $lte: ["$createdAt", endOfDay] }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                as: "checks"
+            }
+        },
+
+        // 2️⃣ Convert checklist presence to BOOLEAN status
+        {
+            $addFields: {
+                checked: {
+                    $gt: [{ $size: "$checks" }, 0]
+                },
+                unchecked: {
+                    $eq: [{ $size: "$checks" }, 0]
+                },
+                error: {
+                    $gt: [
+                        {
+                            $size: {
+                                $filter: {
+                                    input: "$checks",
+                                    as: "c",
+                                    cond: { $eq: ["$$c.is_error", true] }
+                                }
+                            }
+                        },
+                        0
+                    ]
+                }
+            }
+        },
+
+        // 3️⃣ Final response (FULL assembly data)
+        {
+            $project: {
+                checks: 0   // hide raw checklist array
+            }
+        },
+
+        // 4️⃣ Optional sorting
+        {
+            $sort: { assembly_name: 1 }
+        }
+    ]);
+
+    return result;
+};
+
+
+
 
 
 

@@ -91,7 +91,7 @@ export const DeleteTypes = AsyncHandler(async (req, res) => {
     };
 
     if (data.checking_method) {
-        const result = await updatetypesService(id, { uom: data.checking_method });
+        const result = await updatetypesService(id, { checking_method: data.checking_method });
         res.status(StatusCodes.OK).json({
             message: "Type deleted Successfully",
             data: result
