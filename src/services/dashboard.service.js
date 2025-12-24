@@ -335,7 +335,7 @@ export const GetDailyAssemblyStatus = async (admin,user,date = new Date()) => {
     return result;
 };
 
-export const Get
+// export const Get
 
 
 
