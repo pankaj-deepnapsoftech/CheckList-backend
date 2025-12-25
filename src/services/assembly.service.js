@@ -397,7 +397,6 @@ export const GetAssemblyLineDataReport = async (admin, user_id) => {
     return result[0];
 };
 
-
 export const getAssemblyLineTodayReport = async (
     admin,
     user_id,
